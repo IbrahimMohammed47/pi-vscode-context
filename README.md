@@ -50,7 +50,7 @@ function factorial(n) {
 
 Pi should use `vscode_context`, spot the incorrect factorial base case, and fix it using its normal editing tools. The bridge itself remains read-only; it only gives Pi the live editor context needed to understand your request.
 
-[![Watch Pi read selected code from VS Code](https://cdn.loom.com/sessions/thumbnails/a5127e8752b34280b1d28ed6fdf29324-d734a6f1da951588.gif)](https://www.loom.com/share/a5127e8752b34280b1d28ed6fdf29324)
+▶️ [Watch the full demo on Loom](https://www.loom.com/share/a5127e8752b34280b1d28ed6fdf29324)
 
 ## Example prompts
 
