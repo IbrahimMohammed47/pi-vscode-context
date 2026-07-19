@@ -37,6 +37,13 @@ npm run pack:pi:dry-run
 
 ## Releases
 
-Both packages use the same version. Stable tags must use the exact `vMAJOR.MINOR.PATCH` form and match every package manifest. The protected `release` environment gates npm publication and GitHub Release creation.
+Merges to `main` release automatically after CI passes. `semantic-release` derives the next lockstep package version from Conventional Commit messages:
 
-The VSIX is attached to the GitHub Release and uploaded to the Visual Studio Marketplace after review. Open VSX publishing is currently deferred.
+- `fix:` creates a patch release.
+- `feat:` creates a minor release.
+- `BREAKING CHANGE:` in the commit footer creates a major release.
+- Other commit types do not release by default.
+
+The release job publishes the Pi package to npm, uploads the VSIX to the Visual Studio Marketplace, creates the version tag, updates `CHANGELOG.md` and package manifests, and attaches both archives to the GitHub Release. Open VSX publishing is currently deferred.
+
+The GitHub repository must provide `NPM_TOKEN` and `VSCE_PAT` Actions secrets. Authentication is verified before semantic-release creates a tag.
