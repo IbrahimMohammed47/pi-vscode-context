@@ -1,0 +1,66 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+      - run: npm ci
+      - run: npm run release:verify -- "$GITHUB_REF_NAME"
+      - run: npm test
+      - run: npm run check
+      - run: npm run package:vscode
+      - run: npm run pack:pi
+      - uses: actions/upload-artifact@v7
+        with:
+          name: release-artifacts
+          path: |
+            packages/vscode-extension/*.vsix
+            pi-vscode-context-*.tgz
+          if-no-files-found: error
+          retention-days: 30
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+      - uses: actions/download-artifact@v8
+        with:
+          name: release-artifacts
+          path: release-artifacts
+      - name: Publish npm package
+        shell: bash
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          if npm view "pi-vscode-context@$version" version >/dev/null 2>&1; then
+            echo "pi-vscode-context@$version is already published; skipping npm publish."
+          else
+            npm publish release-artifacts/pi-vscode-context-*.tgz --access public
+          fi
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" release-artifacts/* --verify-tag --generate-notes --title "$GITHUB_REF_NAME"

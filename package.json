@@ -1,0 +1,35 @@
+{
+  "name": "pi-vscode-context-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "On-demand VS Code editor context for Pi",
+  "author": "Ibrahim Mohammed",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/IbrahimMohammed47/pi-vscode-context.git"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "npm@11.13.0",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "check": "npm run check --workspaces --if-present",
+    "package:vscode": "npm run package -w pi-vscode-context-vscode",
+    "pack:pi": "npm pack -w pi-vscode-context",
+    "pack:pi:dry-run": "npm pack --dry-run -w pi-vscode-context",
+    "release:verify": "node scripts/verify-version.js",
+    "test": "npm run test:pi && npm run test:vscode",
+    "test:pi": "npm test -w pi-vscode-context",
+    "test:vscode": "npm test -w pi-vscode-context-vscode"
+  },
+  "devDependencies": {
+    "@earendil-works/pi-ai": "0.80.10",
+    "@earendil-works/pi-coding-agent": "0.80.10",
+    "@vscode/vsce": "3.9.2",
+    "typescript": "7.0.2"
+  }
+}

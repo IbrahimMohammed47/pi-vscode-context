@@ -1,0 +1,44 @@
+{
+  "name": "pi-vscode-context-vscode",
+  "displayName": "Pi VS Code Context",
+  "description": "Expose active editor context and diagnostics to local Pi sessions on demand.",
+  "version": "0.1.0",
+  "publisher": "IbrahimMohammed",
+  "author": "Ibrahim Mohammed",
+  "license": "MIT",
+  "icon": "icon.png",
+  "homepage": "https://github.com/IbrahimMohammed47/pi-vscode-context#readme",
+  "bugs": {
+    "url": "https://github.com/IbrahimMohammed47/pi-vscode-context/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/IbrahimMohammed47/pi-vscode-context.git",
+    "directory": "packages/vscode-extension"
+  },
+  "keywords": [
+    "pi",
+    "AI",
+    "context",
+    "diagnostics",
+    "local"
+  ],
+  "engines": {
+    "vscode": "^1.93.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "extensionKind": [
+    "ui"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./extension.js",
+  "scripts": {
+    "check": "node --check extension.js && node --check server.js && node --check context.js && node --check diagnostics.js",
+    "package": "vsce package --no-dependencies --out pi-vscode-context-vscode-${npm_package_version}.vsix",
+    "test": "node --test"
+  }
+}

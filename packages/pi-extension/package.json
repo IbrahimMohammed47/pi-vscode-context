@@ -1,0 +1,48 @@
+{
+  "name": "pi-vscode-context",
+  "version": "0.1.0",
+  "description": "Read active VS Code editor context and diagnostics from Pi",
+  "keywords": [
+    "pi-package",
+    "vscode",
+    "editor-context",
+    "diagnostics",
+    "ai-agent"
+  ],
+  "author": "Ibrahim Mohammed",
+  "license": "MIT",
+  "homepage": "https://github.com/IbrahimMohammed47/pi-vscode-context#readme",
+  "bugs": {
+    "url": "https://github.com/IbrahimMohammed47/pi-vscode-context/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/IbrahimMohammed47/pi-vscode-context.git",
+    "directory": "packages/pi-extension"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "files": [
+    "index.ts",
+    "client.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "pi": {
+    "extensions": [
+      "./index.ts"
+    ]
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-ai": "*",
+    "@earendil-works/pi-coding-agent": "*"
+  },
+  "scripts": {
+    "check": "tsc --noEmit",
+    "test": "node --test"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
