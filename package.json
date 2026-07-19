@@ -1,6 +1,6 @@
 {
   "name": "pi-vscode-context-monorepo",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "On-demand VS Code editor context for Pi",
   "author": "Ibrahim Mohammed",

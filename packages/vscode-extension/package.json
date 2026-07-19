@@ -2,7 +2,7 @@
   "name": "pi-vscode-context-vscode",
   "displayName": "Pi VS Code Context",
   "description": "Expose active editor context and diagnostics to local Pi sessions on demand.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "IbrahimMohammed",
   "author": "Ibrahim Mohammed",
   "license": "MIT",

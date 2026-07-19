@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented here.
 
+## [0.1.1] - 2026-07-19
+
+## [0.1.1](https://github.com/IbrahimMohammed47/pi-vscode-context/compare/v0.1.0...v0.1.1) (2026-07-19)
+
+
+### Bug Fixes
+
+* **package:** Improve discovery metadata and documentation ([691c716](https://github.com/IbrahimMohammed47/pi-vscode-context/commit/691c716a8a0ff438a5d03dc57640779ac555f84b))
+
 ## [0.1.0] - 2026-07-19
 
 ### Added
@@ -18,3 +27,5 @@ All notable changes to this project will be documented here.
 - Account for JSON escaping when bounding selected-code responses.
 
 [0.1.0]: https://github.com/IbrahimMohammed47/pi-vscode-context/releases/tag/v0.1.0
+
+[0.1.1]: https://github.com/IbrahimMohammed47/pi-vscode-context/releases/tag/v0.1.1
