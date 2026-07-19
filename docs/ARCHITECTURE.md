@@ -1,6 +1,6 @@
 # Architecture and Tool Decisions
 
-This document records current product, tool, transport, security, and scope decisions for Pi VS Code Context.
+This document records current product, tool, transport, security, and scope decisions for `pi-vscode-context`.
 
 ## Purpose
 
