@@ -6,11 +6,11 @@ const vscodeDiagnosticsTool = defineTool({
   name: "vscode_diagnostics",
   label: "VS Code Diagnostics",
   description:
-    "Read current VS Code Problems diagnostics from installed language extensions, including unsaved state. Use when the user asks about editor errors/warnings or to validate edits; not for general code review. active checks the active file, while workspace checks all matched roots. Results put errors first. An empty list means VS Code currently reports none; if truncated, fix returned items and call again. Diagnostics can briefly lag fresh edits, so retry once if results conflict. Read-only.",
+    "Read diagnostics currently reported by VS Code language extensions, including unsaved buffers. Use when the user mentions VS Code errors, warnings, red squiggles, or the Problems panel, or when no dedicated language validator is available. Prefer compiler, test, lint, or dedicated LSP tools for authoritative project-wide validation. active checks the active editor; workspace checks matching workspace roots. Empty means VS Code currently reports none. Results are bounded snapshots and may briefly lag edits. Read-only.",
   parameters: Type.Object({
     scope: StringEnum(["active", "workspace"] as const, {
       description:
-        "active for the current file (prefer when relevant); workspace only when the task spans the project",
+        "active for current-editor squiggles and unsaved diagnostics; workspace only for an explicit project-wide VS Code Problems request",
     }),
   }),
 
@@ -35,24 +35,15 @@ const vscodeContextTool = defineTool({
   name: "vscode_context",
   label: "VS Code Context",
   description:
-    "Read live context from the active local VS Code editor, including unsaved text. Use for prompts like 'explain this', 'refactor the selection', or 'review the current file'; use built-in read for explicitly named saved files. current returns selection or bounded cursor context; document returns the whole active file up to 48KB. Positions are zero-based and range ends are exclusive. If isDirty, trust returned text over disk; if truncated or too large, ask for a narrower selection or read the saved file. Read-only.",
-  parameters: Type.Object({
-    scope: StringEnum(["current", "document"] as const, {
-      description:
-        "current for 'this', selection, or cursor context; document only when the whole active file is needed",
-    }),
-  }),
+    "Read active VS Code editor metadata and current selectedCode, including unsaved selection. Use only when the user refers to selected/highlighted/'this' code, current file, or cursor. selectedCode remains after focus moves to the terminal and is null when selection collapses. For current file/cursor, use returned path with normal read, grep, and edit tools; never use this for named files or generic exploration. If isDirty and unselected content is needed, ask the user to save or select it. Read-only.",
+  parameters: Type.Object({}),
 
-  async execute(_toolCallId, params, signal, _onUpdate, ctx) {
-    const result = await requestContext({
-      cwd: ctx.cwd,
-      scope: params.scope,
-      signal,
-    });
+  async execute(_toolCallId, _params, signal, _onUpdate, ctx) {
+    const result = await requestContext({ cwd: ctx.cwd, signal });
     return {
       content: [{ type: "text", text: JSON.stringify(result) }],
       details: {
-        source: result.source,
+        hasSelectedCode: Boolean(result.selectedCode),
         errorCode: result.error?.code,
       },
     };

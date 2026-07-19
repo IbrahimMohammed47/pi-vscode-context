@@ -9,8 +9,8 @@ function position(value) {
   return { line: value.line, character: value.character };
 }
 
-function diagnosticPath(vscode, uri) {
-  return uri.scheme === 'file' ? vscode.workspace.asRelativePath(uri) : uri.toString();
+function diagnosticPath(_vscode, uri) {
+  return uri.scheme === 'file' ? uri.fsPath : uri.toString();
 }
 
 function belongsToWorkspace(uri, workspaceFolders) {

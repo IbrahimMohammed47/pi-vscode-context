@@ -1,10 +1,14 @@
-const { readdir, readFile } = require('node:fs/promises');
-const { homedir } = require('node:os');
+const { createHash } = require('node:crypto');
+const { readdir, readFile, rm } = require('node:fs/promises');
+const { homedir, tmpdir } = require('node:os');
 const { isAbsolute, join, relative, resolve } = require('node:path');
 
 const MAX_RESPONSE_BYTES = 64 * 1024;
 const REQUEST_TIMEOUT_MS = 3000;
-const defaultDiscoveryDir = join(homedir(), '.pi-vscode-context', 'instances');
+const userId = typeof process.getuid === 'function'
+  ? String(process.getuid())
+  : createHash('sha256').update(homedir()).digest('hex').slice(0, 12);
+const defaultDiscoveryDir = join(tmpdir(), `pi-vscode-context-${userId}`, 'instances');
 
 function workspaceScore(record, cwd) {
   if (!Array.isArray(record.workspaceFolders)) return -1;
@@ -53,12 +57,17 @@ async function findDiscovery(cwd, discoveryDir = defaultDiscoveryDir) {
 
   const matches = [];
   for (const file of files.filter((name) => name.endsWith('.json'))) {
+    const discoveryFile = join(discoveryDir, file);
     try {
-      const record = JSON.parse(await readFile(join(discoveryDir, file), 'utf8'));
+      const record = JSON.parse(await readFile(discoveryFile, 'utf8'));
+      if (!validRecord(record)) {
+        await rm(discoveryFile, { force: true }).catch(() => {});
+        continue;
+      }
       const score = workspaceScore(record, cwd);
-      if (score >= 0 && validRecord(record)) matches.push({ ...record, score });
+      if (score >= 0) matches.push({ ...record, score, discoveryFile });
     } catch {
-      // Ignore incomplete or stale discovery files.
+      await rm(discoveryFile, { force: true }).catch(() => {});
     }
   }
 
@@ -111,7 +120,8 @@ async function requestVSCode({
   try {
     for (const record of records) {
       try {
-        const response = await fetchImpl(`${record.endpoint}${pathname}?scope=${encodeURIComponent(scope)}`, {
+        const query = scope === undefined ? '' : `?scope=${encodeURIComponent(scope)}`;
+        const response = await fetchImpl(`${record.endpoint}${pathname}${query}`, {
           headers: { authorization: `Bearer ${record.token}` },
           signal: controller.signal,
         });
@@ -123,6 +133,7 @@ async function requestVSCode({
         return result;
       } catch {
         if (controller.signal.aborted) break;
+        await rm(record.discoveryFile, { force: true }).catch(() => {});
       }
     }
   } finally {

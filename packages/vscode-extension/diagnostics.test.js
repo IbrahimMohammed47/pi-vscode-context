@@ -20,7 +20,7 @@ function diagnostic(message, severity, line, options = {}) {
 
 function fakeVSCode(entries) {
   return {
-    workspace: { asRelativePath: (value) => value.fsPath.replace('/workspace/', '') },
+    workspace: { asRelativePath: (value) => `workspace/${value.fsPath.replace('/workspace/', '')}` },
     languages: {
       getDiagnostics: (activeUri) => activeUri
         ? entries.find(([value]) => value.fsPath === activeUri.fsPath)?.[1] ?? []
@@ -39,7 +39,7 @@ test('active diagnostics are compact, normalized, and severity-sorted', () => {
 
   assert.deepEqual(value, { diagnostics: [
     {
-      path: 'src/app.ts',
+      path: '/workspace/src/app.ts',
       range: { start: { line: 5, character: 1 }, end: { line: 5, character: 4 } },
       severity: 'error',
       code: 'TS2322',
@@ -47,7 +47,7 @@ test('active diagnostics are compact, normalized, and severity-sorted', () => {
       message: 'error',
     },
     {
-      path: 'src/app.ts',
+      path: '/workspace/src/app.ts',
       range: { start: { line: 2, character: 1 }, end: { line: 2, character: 4 } },
       severity: 'warning',
       message: 'warning',

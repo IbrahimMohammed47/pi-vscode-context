@@ -1,12 +1,15 @@
-const { randomBytes, timingSafeEqual } = require('node:crypto');
-const { mkdir, chmod, rename, rm, writeFile } = require('node:fs/promises');
+const { createHash, randomBytes, timingSafeEqual } = require('node:crypto');
+const { mkdir, chmod, rename, rm, rmdir, writeFile } = require('node:fs/promises');
 const { createServer } = require('node:http');
-const { homedir } = require('node:os');
-const { join, resolve } = require('node:path');
+const { homedir, tmpdir } = require('node:os');
+const { dirname, join, resolve } = require('node:path');
 
 const HOST = '127.0.0.1';
 const MAX_RESPONSE_BYTES = 64 * 1024;
-const defaultDiscoveryDir = join(homedir(), '.pi-vscode-context', 'instances');
+const userId = typeof process.getuid === 'function'
+  ? String(process.getuid())
+  : createHash('sha256').update(homedir()).digest('hex').slice(0, 12);
+const defaultDiscoveryDir = join(tmpdir(), `pi-vscode-context-${userId}`, 'instances');
 
 function authorized(header, token) {
   if (typeof header !== 'string') return false;
@@ -42,7 +45,7 @@ async function startServer({
   const token = randomBytes(32).toString('base64url');
   const id = randomBytes(16).toString('hex');
   const routes = {
-    '/context': { scopes: new Set(['current', 'document']), handle: getContext },
+    '/context': { handle: getContext },
     '/diagnostics': { scopes: new Set(['active', 'workspace']), handle: getDiagnostics },
   };
   const server = createServer(async (request, response) => {
@@ -64,7 +67,7 @@ async function startServer({
     }
 
     const scope = url.searchParams.get('scope');
-    if (!route.scopes.has(scope)) {
+    if (route.scopes && !route.scopes.has(scope)) {
       return sendJson(response, 400, {
         error: { code: 'INVALID_SCOPE', message: `Invalid ${url.pathname.slice(1)} scope.` },
       });
@@ -114,6 +117,7 @@ async function startServer({
 
   try {
     await mkdir(discoveryDir, { recursive: true, mode: 0o700 });
+    if (discoveryDir === defaultDiscoveryDir) await chmod(dirname(discoveryDir), 0o700);
     await chmod(discoveryDir, 0o700);
     await writeDiscovery();
   } catch (error) {
@@ -132,12 +136,19 @@ async function startServer({
       if (nextFocused) record.lastFocusedAt = Date.now();
       return writeDiscovery();
     },
+    updateWorkspaceFolders(nextWorkspaceFolders) {
+      if (closed) return Promise.resolve();
+      record.workspaceFolders = nextWorkspaceFolders.map((folder) => resolve(folder));
+      return writeDiscovery();
+    },
     stop() {
       stopping ??= (async () => {
         closed = true;
         await writes.catch(() => {});
         await rm(discoveryFile, { force: true });
         await rm(temporaryFile, { force: true });
+        await rmdir(discoveryDir).catch(() => {});
+        if (discoveryDir === defaultDiscoveryDir) await rmdir(dirname(discoveryDir)).catch(() => {});
         server.closeAllConnections?.();
         await new Promise((accept) => server.close(accept));
       })();

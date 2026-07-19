@@ -1,5 +1,5 @@
 const assert = require('node:assert/strict');
-const { mkdtemp, writeFile } = require('node:fs/promises');
+const { mkdtemp, readFile, writeFile } = require('node:fs/promises');
 const { tmpdir } = require('node:os');
 const { join } = require('node:path');
 const test = require('node:test');
@@ -51,17 +51,26 @@ test('stale preferred window falls back to next live match', async () => {
 
   const value = await requestContext({
     cwd: '/workspace',
-    scope: 'current',
     discoveryDir: directory,
     fetchImpl: async (url) => {
       requests.push(url);
       if (url.includes(':10001')) throw new TypeError('stale');
-      return new Response('{"source":"selection"}', { status: 200 });
+      return new Response('{"path":"src/app.ts","selectedCode":null}', { status: 200 });
     },
   });
 
-  assert.equal(value.source, 'selection');
+  assert.equal(value.path, 'src/app.ts');
   assert.deepEqual(requests.map((url) => new URL(url).port), ['10001', '10002']);
+  await assert.rejects(readFile(join(directory, 'preferred.json'), 'utf8'), { code: 'ENOENT' });
+});
+
+test('discovery removes malformed records opportunistically', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'pi-vscode-malformed-'));
+  const malformed = join(directory, 'malformed.json');
+  await writeFile(malformed, '{');
+
+  assert.deepEqual(await findDiscovery('/workspace', directory), []);
+  await assert.rejects(readFile(malformed, 'utf8'), { code: 'ENOENT' });
 });
 
 test('diagnostics requests use shared authenticated client path', async () => {
@@ -88,14 +97,14 @@ test('diagnostics requests use shared authenticated client path', async () => {
 test('missing and stale VS Code servers report clear failures', async () => {
   const missing = await mkdtemp(join(tmpdir(), 'pi-vscode-missing-'));
   await assert.rejects(
-    requestContext({ cwd: '/workspace', scope: 'current', discoveryDir: missing, timeoutMs: 100 }),
+    requestContext({ cwd: '/workspace', discoveryDir: missing, timeoutMs: 100 }),
     /No VS Code server found/,
   );
 
   const stale = await mkdtemp(join(tmpdir(), 'pi-vscode-stale-'));
   await record(stale, 'stale', ['/workspace']);
   await assert.rejects(
-    requestContext({ cwd: '/workspace', scope: 'current', discoveryDir: stale, timeoutMs: 100 }),
+    requestContext({ cwd: '/workspace', discoveryDir: stale, timeoutMs: 100 }),
     /stale or unavailable|timed out/,
   );
 });

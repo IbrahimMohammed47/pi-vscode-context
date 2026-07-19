@@ -15,16 +15,16 @@ Start Pi with its `cwd` inside a project open in local desktop VS Code.
 ## Tools
 
 ```ts
-vscode_context({ scope: "current" | "document" })
+vscode_context()
 ```
 
-`current` returns the selection or bounded visible cursor context. `document` returns the complete unsaved in-memory document up to 48KB.
+Returns absolute active-editor path, language, dirty state, cursor, and nullable `selectedCode`. Selected code includes unsaved text and remains available when focus moves to the terminal. Generic file reading stays with Pi's normal `read`, `grep`, and edit tools.
 
 ```ts
 vscode_diagnostics({ scope: "active" | "workspace" })
 ```
 
-`active` returns diagnostics for the active document. `workspace` returns bounded diagnostics under matched workspace roots. Positions are zero-based and range ends are exclusive. Requests honor the Pi tool abort signal and have a three-second timeout.
+`active` returns diagnostics for the active document. `workspace` returns bounded diagnostics under matched workspace roots. File paths are absolute. Positions are zero-based and range ends are exclusive. Requests honor the Pi tool abort signal and have a three-second timeout.
 
 No automatic context injection, editor writes, content logging, or separate content persistence occurs. Returned tool results follow normal Pi session behavior.
 
