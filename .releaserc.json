@@ -1,0 +1,45 @@
+{
+  "branches": ["main"],
+  "tagFormat": "v${version}",
+  "plugins": [
+    "@semantic-release/commit-analyzer",
+    "@semantic-release/release-notes-generator",
+    "@semantic-release/changelog",
+    [
+      "@semantic-release/exec",
+      {
+        "verifyConditionsCmd": "node scripts/verify-release-auth.js",
+        "prepareCmd": "node scripts/set-version.js ${nextRelease.version} && npm run package:vscode && npm run pack:pi",
+        "publishCmd": "node scripts/publish-release.js ${nextRelease.version}"
+      }
+    ],
+    [
+      "@semantic-release/git",
+      {
+        "assets": [
+          "CHANGELOG.md",
+          "package.json",
+          "package-lock.json",
+          "packages/pi-extension/package.json",
+          "packages/vscode-extension/package.json"
+        ],
+        "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
+      }
+    ],
+    [
+      "@semantic-release/github",
+      {
+        "assets": [
+          {
+            "path": "pi-vscode-context-*.tgz",
+            "label": "Pi extension npm package"
+          },
+          {
+            "path": "packages/vscode-extension/*.vsix",
+            "label": "VS Code extension"
+          }
+        ]
+      }
+    ]
+  ]
+}

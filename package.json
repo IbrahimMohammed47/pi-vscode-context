@@ -21,6 +21,9 @@
     "package:vscode": "npm run package -w pi-vscode-context-vscode",
     "pack:pi": "npm pack -w pi-vscode-context",
     "pack:pi:dry-run": "npm pack --dry-run -w pi-vscode-context",
+    "release": "semantic-release",
+    "release:publish": "node scripts/publish-release.js",
+    "release:set-version": "node scripts/set-version.js",
     "release:verify": "node scripts/verify-version.js",
     "test": "npm run test:pi && npm run test:vscode",
     "test:pi": "npm test -w pi-vscode-context",
@@ -29,7 +32,12 @@
   "devDependencies": {
     "@earendil-works/pi-ai": "0.80.10",
     "@earendil-works/pi-coding-agent": "0.80.10",
+    "@semantic-release/changelog": "6.0.3",
+    "@semantic-release/exec": "7.1.0",
+    "@semantic-release/git": "10.0.1",
+    "@semantic-release/github": "12.0.9",
     "@vscode/vsce": "3.9.2",
+    "semantic-release": "25.0.8",
     "typescript": "7.0.2"
   }
 }
