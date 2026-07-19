@@ -1,8 +1,8 @@
 # pi-vscode-context
 
 [![CI](https://github.com/IbrahimMohammed47/pi-vscode-context/actions/workflows/ci.yml/badge.svg)](https://github.com/IbrahimMohammed47/pi-vscode-context/actions/workflows/ci.yml)
-[![npm](https://img.shields.io/npm/v/pi-vscode-context)](https://www.npmjs.com/package/pi-vscode-context)
-[![VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/IbrahimMohammed.pi-vscode-context-vscode)](https://marketplace.visualstudio.com/items?itemName=IbrahimMohammed.pi-vscode-context-vscode)
+[![npm](https://badgen.net/npm/v/pi-vscode-context)](https://www.npmjs.com/package/pi-vscode-context)
+[![VS Code Marketplace](https://badgen.net/github/tag/IbrahimMohammed47/pi-vscode-context?label=VS%20Code%20Marketplace)](https://marketplace.visualstudio.com/items?itemName=IbrahimMohammed.pi-vscode-context-vscode)
 
 Read the active local VS Code editor and its Problems diagnostics from Pi, only when the model requests them. The integration is read-only: it does not inject context automatically or mutate the editor.
 
