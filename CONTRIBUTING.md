@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for helping improve Pi VS Code Context.
+Thanks for helping improve `pi-vscode-context`.
 
 ## Development
 

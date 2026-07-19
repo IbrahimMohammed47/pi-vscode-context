@@ -1,6 +1,6 @@
-# Pi VS Code Context
+# pi-vscode-context
 
-Pi package providing read-only `vscode_context` and `vscode_diagnostics` tools for the companion **Pi VS Code Context** extension.
+Pi package providing read-only `vscode_context` and `vscode_diagnostics` tools for the companion **pi-vscode-context** extension.
 
 ## Install
 

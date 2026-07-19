@@ -4,6 +4,8 @@
   "description": "Read active VS Code editor context and diagnostics from Pi",
   "keywords": [
     "pi-package",
+    "pi",
+    "extension",
     "vscode",
     "editor-context",
     "diagnostics",

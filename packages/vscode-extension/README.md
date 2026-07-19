@@ -1,10 +1,10 @@
-# Pi VS Code Context
+# pi-vscode-context
 
 Companion VS Code extension that exposes active editor context and Problems diagnostics to local Pi sessions on demand.
 
 ## Install
 
-Install **Pi VS Code Context** from the VS Code Marketplace. Then install the Pi package:
+Install **pi-vscode-context** from the VS Code Marketplace. Then install the Pi package:
 
 ```sh
 pi install npm:pi-vscode-context
