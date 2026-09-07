@@ -10,7 +10,7 @@ Install **pi-vscode-context** from the VS Code Marketplace. Then install the Pi 
 pi install npm:pi-vscode-context
 ```
 
-Open your project in local desktop VS Code and start Pi with its `cwd` inside that project. There are no commands or settings to configure.
+Open your project in desktop VS Code (local or Remote SSH) and start Pi on the workspace host with its `cwd` inside that project. There are no commands or settings to configure.
 
 ## Privacy and security
 
@@ -26,9 +26,11 @@ Any process running as the same OS user can generally access user-owned files an
 ## Troubleshooting
 
 - **Pi cannot find VS Code:** ensure this extension is enabled and reload the VS Code window.
-- **No active editor:** open or focus a file.
+- **No active editor:** open or focus a file. When focus leaves the editor, the extension uses the last active editor if it is still visible, or the sole visible editor. It reads the live selection on demand; it never caches selected text or uses closed/hidden editors. Multiple visible editors without a known last active editor remain ambiguous.
 - **Multiple windows:** focus the intended matching workspace before retrying.
-- Remote SSH, WSL, Dev Containers, Codespaces, and browser-based VS Code are intentionally unsupported.
+- Remote SSH is supported when this extension is installed on the SSH host. Run Pi as the same remote OS user, inside a folder open in that window. Reload the window after installation. The server and private discovery files stay on the remote host; no port forwarding is needed.
+- WSL, Dev Containers, Codespaces, and browser-based VS Code remain unsupported.
+- If an older local copy activates instead, set `"remote.extensionKind": { "IbrahimMohammed.pi-vscode-context-vscode": ["workspace"] }` in local User Settings and reload the window.
 
 ## Source and license
 

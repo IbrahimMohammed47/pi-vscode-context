@@ -2,6 +2,7 @@ const vscode = require('vscode');
 const { buildContext } = require('./context');
 const { buildDiagnostics } = require('./diagnostics');
 const { startServer } = require('./server');
+const { trackEditor } = require('./editor');
 
 let service;
 
@@ -12,11 +13,12 @@ function fileWorkspaceFolders() {
 }
 
 async function activate(context) {
-  if (vscode.env.remoteName) {
-    vscode.window.showWarningMessage('Pi VS Code Context currently supports local desktop workspaces only.');
+  if (vscode.env.remoteName && vscode.env.remoteName !== 'ssh-remote') {
+    vscode.window.showWarningMessage('Pi VS Code Context supports local desktop and Remote SSH workspaces only.');
     return;
   }
 
+  const getEditor = trackEditor(vscode.window, context.subscriptions);
   let workspaceFolders = fileWorkspaceFolders();
   let focused = vscode.window.state.focused;
   context.subscriptions.push(vscode.window.onDidChangeWindowState((state) => {
@@ -32,10 +34,10 @@ async function activate(context) {
     service = await startServer({
       workspaceFolders,
       focused,
-      getContext: () => buildContext(vscode, vscode.window.activeTextEditor),
+      getContext: () => buildContext(vscode, getEditor()),
       getDiagnostics: (scope) => buildDiagnostics(
         vscode,
-        vscode.window.activeTextEditor,
+        getEditor(),
         scope,
         workspaceFolders,
       ),

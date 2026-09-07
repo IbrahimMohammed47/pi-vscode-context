@@ -40,7 +40,7 @@ VS Code window B ── authenticated HTTP server B ── discovery record B
                                      Pi
 ```
 
-Pi does not need to run in VS Code's integrated terminal. It may run in any local terminal under the same OS user.
+Pi does not need to run in VS Code's integrated terminal. It may run in any terminal under the same OS user on the workspace host. The extension uses `extensionKind: ["workspace"]`; in Remote SSH, both the server and Pi run remotely, with unchanged loopback transport and private discovery. No SSH port forwarding is needed.
 
 ## Communication technology
 
@@ -150,7 +150,7 @@ When selection exists:
 }
 ```
 
-`selectedCode` is current VS Code editor selection. It remains selected when focus moves from editor to terminal, though VS Code renders it as inactive selection. It becomes `null` when selection collapses. It is not selection history; no state is retained.
+`selectedCode` is current VS Code editor selection. It remains selected when focus moves from editor to terminal, though VS Code renders it as inactive selection. It becomes `null` when selection collapses. It is not selection history; no selected text is retained. If `activeTextEditor` becomes undefined, a live reference to the last active editor is used only while that editor remains visible. A sole visible editor is also an unambiguous fallback at activation. Hidden/closed editors and ambiguous splits do not supply fallback context. Active diagnostics use the same editor resolution.
 
 Selected text is bounded to 48KB and may be shortened further when JSON escaping would exceed the 64KB response bound. Truncated selection adds:
 
@@ -240,13 +240,12 @@ Tool results follow normal Pi session persistence behavior because model must re
 Supported:
 
 - Local desktop VS Code
-- Local Pi process under same OS user
+- Pi process under the same OS user on the workspace host
+- Remote SSH with the companion extension installed on the SSH host
 - Pi in integrated or external terminal
 - Multiple VS Code windows and multi-root workspaces
 
 Deferred:
-
-- Remote SSH
 - WSL
 - Dev Containers
 - Codespaces

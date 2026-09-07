@@ -21,7 +21,9 @@ AI coding has two camps. One wants to fire the editor and let the agent drive. T
    pi install npm:pi-vscode-context
    ```
 
-3. Open your project in local desktop VS Code, then start Pi with its `cwd` inside that project.
+3. Open your project in desktop VS Code (local or Remote SSH), then start Pi on the workspace host with its `cwd` inside that project.
+
+For Remote SSH, install the companion extension on the SSH host and run Pi as the same remote OS user. The authenticated loopback server and private discovery records stay on that host; no port forwarding is needed. If an older local copy activates instead, set `"remote.extensionKind": { "IbrahimMohammed.pi-vscode-context-vscode": ["workspace"] }` in local User Settings and reload.
 
 The model can now call:
 
@@ -88,7 +90,8 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the process model, authenti
 - **Dirty file:** save it before filesystem reads, or select relevant unsaved code so `selectedCode` can carry it.
 - **Stale or unavailable connection:** reload the matching VS Code window and retry once.
 - **Wrong window:** focus the intended VS Code window; Pi prefers the most recently focused matching workspace.
-- Remote SSH, WSL, Dev Containers, Codespaces, and browser-based VS Code are intentionally unsupported.
+- WSL, Dev Containers, Codespaces, and browser-based VS Code remain unsupported.
+- When editor focus is lost, the extension uses the last active editor only while it remains visible, or the sole visible editor. It reads the live selection, not cached text. Multiple visible editors without a known last active editor remain ambiguous.
 
 ## Development
 

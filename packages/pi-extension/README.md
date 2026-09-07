@@ -10,7 +10,7 @@ First install the companion extension from the [VS Code Marketplace](https://mar
 pi install npm:pi-vscode-context
 ```
 
-Start Pi with its `cwd` inside a project open in local desktop VS Code.
+Start Pi with its `cwd` inside a project open in desktop VS Code. For Remote SSH, install the companion extension on the SSH host and run Pi there as the same OS user; no port forwarding is needed.
 
 ## Tools
 
@@ -35,7 +35,7 @@ No automatic context injection, editor writes, content logging, or separate cont
 - Focus an editor before requesting active context or diagnostics.
 - Reload the matching VS Code window if discovery becomes stale.
 
-Remote VS Code environments are not supported.
+Remote SSH is supported with the companion extension running on the remote workspace host. Other remote environments remain unsupported.
 
 ## Source and license
 
