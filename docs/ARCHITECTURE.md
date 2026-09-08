@@ -22,7 +22,7 @@ Normal Pi tools remain responsible for reading files, searching, editing, Git, a
 packages/vscode-extension
   VS Code APIs, local HTTP server, discovery, context, browser element capture, diagnostics
 
-packages/pi-extension
+packages/pi-vscode-context
   Pi tool definitions, discovery client, authenticated requests
 ```
 

@@ -1,18 +1,30 @@
-const { createHash, randomBytes, timingSafeEqual } = require('node:crypto');
-const { mkdir, chmod, rename, rm, rmdir, writeFile } = require('node:fs/promises');
-const { createServer } = require('node:http');
-const { homedir, tmpdir } = require('node:os');
-const { dirname, join, resolve } = require('node:path');
+const { createHash, randomBytes, timingSafeEqual } = require("node:crypto");
+const {
+  mkdir,
+  chmod,
+  rename,
+  rm,
+  rmdir,
+  writeFile,
+} = require("node:fs/promises");
+const { createServer } = require("node:http");
+const { homedir, tmpdir } = require("node:os");
+const { dirname, join, resolve } = require("node:path");
 
-const HOST = '127.0.0.1';
+const HOST = "127.0.0.1";
 const MAX_RESPONSE_BYTES = 64 * 1024;
-const userId = typeof process.getuid === 'function'
-  ? String(process.getuid())
-  : createHash('sha256').update(homedir()).digest('hex').slice(0, 12);
-const defaultDiscoveryDir = join(tmpdir(), `pi-vscode-context-${userId}`, 'instances');
+const userId =
+  typeof process.getuid === "function"
+    ? String(process.getuid())
+    : createHash("sha256").update(homedir()).digest("hex").slice(0, 12);
+const defaultDiscoveryDir = join(
+  tmpdir(),
+  `pi-vscode-context-${userId}`,
+  "instances",
+);
 
 function authorized(header, token) {
-  if (typeof header !== 'string') return false;
+  if (typeof header !== "string") return false;
   const actual = Buffer.from(header);
   const expected = Buffer.from(`Bearer ${token}`);
   return actual.length === expected.length && timingSafeEqual(actual, expected);
@@ -23,13 +35,17 @@ function sendJson(response, status, value) {
   if (Buffer.byteLength(body) > MAX_RESPONSE_BYTES) {
     status = 413;
     body = JSON.stringify({
-      error: { code: 'RESPONSE_TOO_LARGE', message: 'VS Code response exceeded safe output limit. Use a narrower scope and retry.' },
+      error: {
+        code: "RESPONSE_TOO_LARGE",
+        message:
+          "VS Code response exceeded safe output limit. Use a narrower scope and retry.",
+      },
     });
   }
   response.writeHead(status, {
-    'cache-control': 'no-store',
-    'content-type': 'application/json; charset=utf-8',
-    'content-length': Buffer.byteLength(body),
+    "cache-control": "no-store",
+    "content-type": "application/json; charset=utf-8",
+    "content-length": Buffer.byteLength(body),
   });
   response.end(body);
 }
@@ -42,36 +58,51 @@ async function startServer({
   focused = false,
   discoveryDir = defaultDiscoveryDir,
 }) {
-  const resolvedWorkspaceFolders = workspaceFolders.map((folder) => resolve(folder));
-  const token = randomBytes(32).toString('base64url');
-  const id = randomBytes(16).toString('hex');
+  const resolvedWorkspaceFolders = workspaceFolders.map((folder) =>
+    resolve(folder),
+  );
+  const token = randomBytes(32).toString("base64url");
+  const id = randomBytes(16).toString("hex");
   const routes = {
-    '/context': { handle: getContext },
-    '/diagnostics': { scopes: new Set(['active', 'workspace']), handle: getDiagnostics },
-    '/browser-selection': { handle: getBrowserSelection },
+    "/context": { handle: getContext },
+    "/diagnostics": {
+      scopes: new Set(["active", "workspace"]),
+      handle: getDiagnostics,
+    },
+    "/browser-selection": { handle: getBrowserSelection },
   };
   const server = createServer(async (request, response) => {
     let url;
     try {
       url = new URL(request.url, `http://${HOST}`);
     } catch {
-      return sendJson(response, 400, { error: { code: 'BAD_REQUEST', message: 'Invalid request URL.' } });
-    }
-
-    const route = routes[url.pathname];
-    if (request.method !== 'GET' || !route?.handle) {
-      return sendJson(response, 404, { error: { code: 'NOT_FOUND', message: 'Not found.' } });
-    }
-    if (!authorized(request.headers.authorization, token)) {
-      return sendJson(response, 401, {
-        error: { code: 'UNAUTHORIZED', message: 'Missing or invalid bearer token.' },
+      return sendJson(response, 400, {
+        error: { code: "BAD_REQUEST", message: "Invalid request URL." },
       });
     }
 
-    const scope = url.searchParams.get('scope');
+    const route = routes[url.pathname];
+    if (request.method !== "GET" || !route?.handle) {
+      return sendJson(response, 404, {
+        error: { code: "NOT_FOUND", message: "Not found." },
+      });
+    }
+    if (!authorized(request.headers.authorization, token)) {
+      return sendJson(response, 401, {
+        error: {
+          code: "UNAUTHORIZED",
+          message: "Missing or invalid bearer token.",
+        },
+      });
+    }
+
+    const scope = url.searchParams.get("scope");
     if (route.scopes && !route.scopes.has(scope)) {
       return sendJson(response, 400, {
-        error: { code: 'INVALID_SCOPE', message: `Invalid ${url.pathname.slice(1)} scope.` },
+        error: {
+          code: "INVALID_SCOPE",
+          message: `Invalid ${url.pathname.slice(1)} scope.`,
+        },
       });
     }
 
@@ -79,13 +110,17 @@ async function startServer({
       sendJson(response, 200, await route.handle(scope));
     } catch {
       sendJson(response, 500, {
-        error: { code: 'VSCODE_REQUEST_ERROR', message: 'VS Code could not read requested data. Retry once; if it persists, reload the matching VS Code window.' },
+        error: {
+          code: "VSCODE_REQUEST_ERROR",
+          message:
+            "VS Code could not read requested data. Retry once; if it persists, reload the matching VS Code window.",
+        },
       });
     }
   });
 
   await new Promise((accept, reject) => {
-    server.once('error', reject);
+    server.once("error", reject);
     server.listen(0, HOST, accept);
   });
 
@@ -110,16 +145,19 @@ async function startServer({
 
   function writeDiscovery() {
     const body = JSON.stringify(record);
-    writes = writes.catch(() => {}).then(async () => {
-      await writeFile(temporaryFile, body, { encoding: 'utf8', mode: 0o600 });
-      await rename(temporaryFile, discoveryFile);
-    });
+    writes = writes
+      .catch(() => {})
+      .then(async () => {
+        await writeFile(temporaryFile, body, { encoding: "utf8", mode: 0o600 });
+        await rename(temporaryFile, discoveryFile);
+      });
     return writes;
   }
 
   try {
     await mkdir(discoveryDir, { recursive: true, mode: 0o700 });
-    if (discoveryDir === defaultDiscoveryDir) await chmod(dirname(discoveryDir), 0o700);
+    if (discoveryDir === defaultDiscoveryDir)
+      await chmod(dirname(discoveryDir), 0o700);
     await chmod(discoveryDir, 0o700);
     await writeDiscovery();
   } catch (error) {
@@ -140,7 +178,9 @@ async function startServer({
     },
     updateWorkspaceFolders(nextWorkspaceFolders) {
       if (closed) return Promise.resolve();
-      record.workspaceFolders = nextWorkspaceFolders.map((folder) => resolve(folder));
+      record.workspaceFolders = nextWorkspaceFolders.map((folder) =>
+        resolve(folder),
+      );
       return writeDiscovery();
     },
     stop() {
@@ -150,7 +190,8 @@ async function startServer({
         await rm(discoveryFile, { force: true });
         await rm(temporaryFile, { force: true });
         await rmdir(discoveryDir).catch(() => {});
-        if (discoveryDir === defaultDiscoveryDir) await rmdir(dirname(discoveryDir)).catch(() => {});
+        if (discoveryDir === defaultDiscoveryDir)
+          await rmdir(dirname(discoveryDir)).catch(() => {});
         server.closeAllConnections?.();
         await new Promise((accept) => server.close(accept));
       })();
