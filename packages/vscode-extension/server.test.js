@@ -33,13 +33,14 @@ test('server rejects requests without discovery bearer token', async () => {
   await assert.rejects(readFile(service.discoveryFile, 'utf8'), { code: 'ENOENT' });
 });
 
-test('server routes authenticated context and diagnostics requests', async () => {
+test('server routes authenticated context, diagnostics, and browser-selection requests', async () => {
   const discoveryDir = await mkdtemp(join(tmpdir(), 'pi-vscode-diagnostics-'));
   const service = await startServer({
     discoveryDir,
     workspaceFolders: ['/workspace'],
     getContext: async () => context,
     getDiagnostics: async (scope) => ({ diagnostics: [{ scope }] }),
+    getBrowserSelection: async () => ({ selectedElement: { selector: 'button#save' } }),
   });
 
   try {
@@ -52,6 +53,10 @@ test('server routes authenticated context and diagnostics requests', async () =>
     const diagnosticsResponse = await fetch(`${record.endpoint}/diagnostics?scope=workspace`, { headers });
     assert.equal(diagnosticsResponse.status, 200);
     assert.deepEqual(await diagnosticsResponse.json(), { diagnostics: [{ scope: 'workspace' }] });
+
+    const browserResponse = await fetch(`${record.endpoint}/browser-selection`, { headers });
+    assert.equal(browserResponse.status, 200);
+    assert.deepEqual(await browserResponse.json(), { selectedElement: { selector: 'button#save' } });
   } finally {
     await service.stop();
   }

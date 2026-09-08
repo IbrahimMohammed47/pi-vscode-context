@@ -1,7 +1,7 @@
 {
   "name": "pi-vscode-context",
   "version": "0.1.1",
-  "description": "Read active VS Code editor context and diagnostics from Pi",
+  "description": "Read active VS Code editor context, Integrated Browser elements, and diagnostics from Pi",
   "keywords": [
     "pi-package",
     "pi",

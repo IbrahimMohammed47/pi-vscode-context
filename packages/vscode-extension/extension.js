@@ -1,6 +1,7 @@
 const vscode = require('vscode');
 const { buildContext } = require('./context');
 const { buildDiagnostics } = require('./diagnostics');
+const { CAPTURE_COMMAND, createBrowserSelectionCapture } = require('./browserSelection');
 const { startServer } = require('./server');
 const { trackEditor } = require('./editor');
 
@@ -19,6 +20,21 @@ async function activate(context) {
   }
 
   const getEditor = trackEditor(vscode.window, context.subscriptions);
+  const browserSelection = createBrowserSelectionCapture(vscode, context.extensionUri);
+  context.subscriptions.push(
+    browserSelection,
+    vscode.commands.registerCommand(CAPTURE_COMMAND, async () => {
+      const result = await browserSelection.capture();
+      if (result.armed) {
+        vscode.window.setStatusBarMessage(result.message, 5000);
+      } else {
+        vscode.window.showWarningMessage(
+          result.error?.message ?? 'The browser element picker did not start.',
+        );
+      }
+      return result;
+    }),
+  );
   let workspaceFolders = fileWorkspaceFolders();
   let focused = vscode.window.state.focused;
   context.subscriptions.push(vscode.window.onDidChangeWindowState((state) => {
@@ -41,6 +57,7 @@ async function activate(context) {
         scope,
         workspaceFolders,
       ),
+      getBrowserSelection: () => browserSelection.read(),
     });
     await service.updateFocus(focused);
     await service.updateWorkspaceFolders(workspaceFolders);

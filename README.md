@@ -4,7 +4,7 @@
 [![npm](https://badgen.net/npm/v/pi-vscode-context)](https://www.npmjs.com/package/pi-vscode-context)
 [![VS Code Marketplace](https://badgen.net/github/tag/IbrahimMohammed47/pi-vscode-context?label=VS%20Code%20Marketplace)](https://marketplace.visualstudio.com/items?itemName=IbrahimMohammed.pi-vscode-context-vscode)
 
-Read the active local VS Code editor and its Problems diagnostics from Pi, only when the model requests them. The integration is read-only: it does not inject context automatically or mutate the editor.
+Read active VS Code editor context, captured Integrated Browser elements, and Problems diagnostics from Pi. The bridge does not edit workspace files or editor contents; browser capture injects a temporary, user-initiated one-shot picker.
 
 ## Why this exists
 
@@ -30,6 +30,7 @@ The model can now call:
 ```ts
 vscode_context()
 vscode_diagnostics({ scope: "active" | "workspace" })
+vscode_browser_selection()
 ```
 
 ## Usage
@@ -50,7 +51,7 @@ function factorial(n) {
    Fix the bug in this selected code.
    ```
 
-Pi should use `vscode_context`, spot the incorrect factorial base case, and fix it using its normal editing tools. The bridge itself remains read-only; it only gives Pi the live editor context needed to understand your request.
+Pi should use `vscode_context`, spot the incorrect factorial base case, and fix it using its normal editing tools. The bridge does not edit the file; it only gives Pi the live editor context needed to understand your request.
 
 ▶️ [Watch the full demo on Loom](https://www.loom.com/share/a5127e8752b34280b1d28ed6fdf29324)
 
@@ -59,12 +60,13 @@ Pi should use `vscode_context`, spot the incorrect factorial base case, and fix 
 Use natural language—Pi decides when the editor context is relevant and calls the appropriate tool.
 
 | User message | Tool and behavior |
-|---|---|
+| --- | --- |
 | “What code am I selecting in VS Code?” | `vscode_context()` returns the current selection. |
 | “Explain this highlighted function.” | `vscode_context()` supplies the selected code, including unsaved edits. |
 | “Explain the code at my cursor.” | `vscode_context()` identifies the path and cursor; Pi can then use its normal file-reading tools for the surrounding code. |
 | “Explain the red squiggles in this file.” | `vscode_diagnostics({ scope: "active" })` returns errors and warnings reported by VS Code language tooling. |
 | “Are there any VS Code errors or warnings across this workspace?” | `vscode_diagnostics({ scope: "workspace" })` checks diagnostics under the matched workspace roots. |
+| “Read this element in the VS Code browser.” | Run **Pi: Pick Integrated Browser Element**, click the element, then `vscode_browser_selection()` returns its DOM context. |
 
 The bridge also supports multiple local VS Code windows and multi-root workspaces, works whether Pi runs in an integrated or external terminal, and reflects unsaved selections and diagnostics. Context is fetched only on demand and the bridge never edits the editor.
 
@@ -72,7 +74,8 @@ The bridge also supports multiple local VS Code windows and multi-root workspace
 
 - `vscode_context` returns absolute active-editor path, language, dirty state, cursor, and nullable `selectedCode`. It never reads generic file content.
 - `vscode_diagnostics` returns current VS Code diagnostics with absolute file paths for the active document or matched workspace roots.
-- Results are compact and bounded. Selected code and diagnostics reflect unsaved editor state.
+- `vscode_browser_selection` returns the latest element captured with **Pi: Pick Integrated Browser Element**, including URL, selector, outerHTML, text, attributes, bounds, and key computed styles. The explicit picker briefly uses VS Code's built-in Integrated Browser debugger and restores the previous clipboard.
+- Results are compact and bounded. Selected code, browser selection, and diagnostics reflect current VS Code state.
 - Positions are zero-based and range ends are exclusive.
 
 Each VS Code window exposes an authenticated HTTP server on a random `127.0.0.1` port. Private records under `<os.tmpdir>/pi-vscode-context-<user-id>/instances` let Pi select the best matching window by workspace root and focus recency. Records track live multi-root folder changes. Malformed and dead records are removed opportunistically; records never contain editor contents or diagnostics.

@@ -1,6 +1,6 @@
 # pi-vscode-context
 
-Pi package providing read-only `vscode_context` and `vscode_diagnostics` tools for the companion **pi-vscode-context** extension.
+Pi package providing read-only `vscode_context`, `vscode_browser_selection`, and `vscode_diagnostics` tools for the companion **pi-vscode-context** extension.
 
 ## Install
 
@@ -21,6 +21,12 @@ vscode_context()
 Returns absolute active-editor path, language, dirty state, cursor, and nullable `selectedCode`. Selected code includes unsaved text and remains available when focus moves to the terminal. Generic file reading stays with Pi's normal `read`, `grep`, and edit tools.
 
 ```ts
+vscode_browser_selection()
+```
+
+Returns the latest Integrated Browser element snapshot, including URL, selector, outerHTML, text, attributes, bounds, and key computed styles. Run **Pi: Pick Integrated Browser Element**, then hover and click an element. The user-initiated picker briefly attaches VS Code's built-in `editor-browser` debugger and restores the previous clipboard.
+
+```ts
 vscode_diagnostics({ scope: "active" | "workspace" })
 ```
 
@@ -33,6 +39,7 @@ No automatic context injection, editor writes, content logging, or separate cont
 - Ensure the companion extension is enabled in local desktop VS Code.
 - Open the same project in VS Code and start Pi inside that project.
 - Focus an editor before requesting active context or diagnostics.
+- For browser element capture, run **Pi: Pick Integrated Browser Element**, hover and click the intended element, and then ask Pi.
 - Reload the matching VS Code window if discovery becomes stale.
 
 Remote SSH is supported with the companion extension running on the remote workspace host. Other remote environments remain unsupported.

@@ -3,7 +3,7 @@ const { mkdtemp, readFile, writeFile } = require('node:fs/promises');
 const { tmpdir } = require('node:os');
 const { join } = require('node:path');
 const test = require('node:test');
-const { findDiscovery, requestContext, requestDiagnostics } = require('./client');
+const { findDiscovery, requestBrowserSelection, requestContext, requestDiagnostics } = require('./client');
 
 async function record(
   directory,
@@ -91,6 +91,25 @@ test('diagnostics requests use shared authenticated client path', async () => {
   assert.deepEqual(value, { diagnostics: [] });
   assert.equal(new URL(requested.url).pathname, '/diagnostics');
   assert.equal(new URL(requested.url).searchParams.get('scope'), 'active');
+  assert.equal(requested.authorization, 'Bearer token');
+});
+
+test('browser selection requests use shared authenticated client path', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'pi-vscode-browser-'));
+  await record(directory, 'server', ['/workspace'], 'http://127.0.0.1:10004');
+  let requested;
+
+  const value = await requestBrowserSelection({
+    cwd: '/workspace',
+    discoveryDir: directory,
+    fetchImpl: async (url, options) => {
+      requested = { url, authorization: options.headers.authorization };
+      return new Response('{"selectedElement":{"selector":"button#save"}}', { status: 200 });
+    },
+  });
+
+  assert.deepEqual(value, { selectedElement: { selector: 'button#save' } });
+  assert.equal(new URL(requested.url).pathname, '/browser-selection');
   assert.equal(requested.authorization, 'Bearer token');
 });
 

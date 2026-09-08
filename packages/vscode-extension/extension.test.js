@@ -10,6 +10,9 @@ for (const remoteName of [undefined, 'ssh-remote', 'dev-container']) {
     const warnings = [];
     const vscode = {
       env: { remoteName },
+      commands: {
+        registerCommand: () => ({ dispose() {} }),
+      },
       workspace: {
         workspaceFolders: [{ uri: { scheme: 'file', fsPath: '/workspace/project' } }],
         onDidChangeWorkspaceFolders: () => ({ dispose() {} }),
@@ -30,7 +33,8 @@ for (const remoteName of [undefined, 'ssh-remote', 'dev-container']) {
       module,
       require: (name) => name === 'vscode' ? vscode
         : name === './server' ? { startServer: async (value) => { options = value; return service; } }
-        : name === './editor' ? require('./editor') : {},
+        : name === './editor' ? require('./editor')
+        : name === './browserSelection' ? require('./browserSelection') : {},
     });
     await module.exports.activate({ subscriptions: [] });
     if (remoteName === 'dev-container') {

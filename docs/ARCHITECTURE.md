@@ -12,6 +12,7 @@ The integration answers questions that filesystem tools cannot answer reliably:
 - Where is the cursor?
 - What code is currently selected, including unsaved selection?
 - What diagnostics are currently reported by VS Code language extensions?
+- Which rendered element did the user explicitly pick in VS Code's Integrated Browser?
 
 Normal Pi tools remain responsible for reading files, searching, editing, Git, and tests.
 
@@ -19,7 +20,7 @@ Normal Pi tools remain responsible for reading files, searching, editing, Git, a
 
 ```text
 packages/vscode-extension
-  VS Code APIs, local HTTP server, discovery, context, diagnostics
+  VS Code APIs, local HTTP server, discovery, context, browser element capture, diagnostics
 
 packages/pi-extension
   Pi tool definitions, discovery client, authenticated requests
@@ -171,6 +172,41 @@ Removed intentionally:
 
 These overlapped normal Pi tools, increased token use, or exposed incidental UI state.
 
+### `vscode_browser_selection()`
+
+No arguments.
+
+Use only when the user asks about an element in VS Code's built-in Integrated Browser. The user runs **Pi: Pick Integrated Browser Element**, then hovers and clicks the intended element.
+
+Capture implementation:
+
+1. Briefly attach VS Code's built-in `editor-browser` debugger to the active browser tab.
+2. Inject a bounded, user-initiated element picker and immediately detach the debugger.
+3. Highlight the hovered element and intercept one click without activating the page control.
+4. Collect URL, selector, outerHTML, text, attributes, bounds, and key computed styles.
+5. Transfer the marked JSON payload through the clipboard, restore the previous clipboard, and retain the snapshot in extension memory.
+6. Return the stored snapshot when Pi calls the authenticated endpoint.
+
+Response:
+
+```json
+{
+  "selectedElement": {
+    "url": "http://localhost:3000/",
+    "tagName": "button",
+    "selector": "button#save",
+    "outerHTML": "<button id=\"save\">Save</button>",
+    "text": "Save",
+    "attributes": { "id": "save" },
+    "rect": { "x": 10, "y": 20, "width": 80, "height": 32 },
+    "computedStyle": { "display": "inline-block" }
+  },
+  "capturedAt": "2026-09-08T03:15:00.000Z"
+}
+```
+
+Payload fields are bounded before clipboard transfer and the server enforces its 64KB response limit. The in-memory snapshot is replaced on each capture and disappears when the VS Code extension host stops. Before the first capture, the endpoint returns `NO_BROWSER_ELEMENT_CAPTURE`. The picker targets the built-in Integrated Browser; legacy Simple Browser and arbitrary third-party webviews remain unsupported.
+
 ### `vscode_diagnostics({ scope })`
 
 ```ts
@@ -202,7 +238,7 @@ An empty list means VS Code currently reports no matching diagnostics. Diagnosti
 ## Agent routing
 
 | User intent | Correct behavior |
-|---|---|
+| --- | --- |
 | "Explain selected code" | `vscode_context()`, use `selectedCode` |
 | "What file am I looking at?" | `vscode_context()`, use metadata |
 | "Explain code at cursor" | `vscode_context()`, then targeted normal `read` |
@@ -211,6 +247,7 @@ An empty list means VS Code currently reports no matching diagnostics. Diagnosti
 | "Edit this file" | Normal `edit`/`write` |
 | "What error is VS Code showing?" | `vscode_diagnostics({scope:"active"})` |
 | "Any VS Code errors in project?" | `vscode_diagnostics({scope:"workspace"})` |
+| "What is selected in the VS Code browser?" | Run **Pi: Pick Integrated Browser Element**, click it, then `vscode_browser_selection()` |
 
 ## Errors
 
@@ -231,7 +268,7 @@ Expected recovery:
 
 ## Data handling
 
-VS Code reads editor and diagnostic state only when authenticated request arrives. No automatic context injection, continuous copying, editor mutation, content logging, or separate content persistence occurs.
+VS Code reads editor and diagnostic state only when an authenticated request arrives. A browser element is captured only through the explicit picker command, stored in extension memory, and returned on an authenticated request. Capture briefly attaches the built-in browser debugger, injects a one-shot picker, transfers a bounded payload through the clipboard, and restores the prior clipboard. No automatic context injection, continuous copying, content logging, or separate persistence occurs.
 
 Tool results follow normal Pi session persistence behavior because model must receive them.
 
@@ -246,6 +283,7 @@ Supported:
 - Multiple VS Code windows and multi-root workspaces
 
 Deferred:
+
 - WSL
 - Dev Containers
 - Codespaces

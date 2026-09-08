@@ -156,11 +156,16 @@ function requestDiagnostics(options) {
   return requestVSCode({ ...options, pathname: '/diagnostics' });
 }
 
+function requestBrowserSelection(options) {
+  return requestVSCode({ ...options, pathname: '/browser-selection' });
+}
+
 module.exports = {
   compareRecords,
   defaultDiscoveryDir,
   findDiscovery,
   MAX_RESPONSE_BYTES,
+  requestBrowserSelection,
   requestContext,
   requestDiagnostics,
   workspaceScore,

@@ -37,6 +37,7 @@ function sendJson(response, status, value) {
 async function startServer({
   getContext,
   getDiagnostics,
+  getBrowserSelection,
   workspaceFolders,
   focused = false,
   discoveryDir = defaultDiscoveryDir,
@@ -47,6 +48,7 @@ async function startServer({
   const routes = {
     '/context': { handle: getContext },
     '/diagnostics': { scopes: new Set(['active', 'workspace']), handle: getDiagnostics },
+    '/browser-selection': { handle: getBrowserSelection },
   };
   const server = createServer(async (request, response) => {
     let url;
