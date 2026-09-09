@@ -12,6 +12,19 @@ pi install npm:pi-vscode-context
 
 Start Pi with its `cwd` inside a project open in desktop VS Code. For Remote SSH, install the companion extension on the SSH host and run Pi there as the same OS user; no port forwarding is needed.
 
+## Footer status
+
+While a matching VS Code window is reachable, the Pi footer shows the active file and cursor/selection, refreshed roughly every 2 seconds:
+
+```text
+○ app.ts:42          # cursor on line 42, no selection
+○ app.ts:10-14        # lines 10-14 selected
+● app.ts:42           # unsaved changes (dirty)
+○ no active editor    # VS Code reachable, nothing focused
+```
+
+The status clears automatically when no matching VS Code window is reachable, and again when the Pi session ends. This uses the same authenticated, loopback-only discovery as the tools below; no extra configuration is required.
+
 ## Tools
 
 ```ts

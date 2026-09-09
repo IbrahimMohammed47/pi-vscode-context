@@ -1,10 +1,15 @@
 import { StringEnum, Type } from "@earendil-works/pi-ai";
 import { defineTool, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { basename } from "node:path";
 import {
   requestBrowserSelection,
   requestContext,
   requestDiagnostics,
 } from "./client.js";
+
+const STATUS_KEY = "vscode-context";
+const STATUS_POLL_INTERVAL_MS = 2000;
+const STATUS_REQUEST_TIMEOUT_MS = 1500;
 
 const vscodeDiagnosticsTool = defineTool({
   name: "vscode_diagnostics",
@@ -74,8 +79,83 @@ const vscodeContextTool = defineTool({
   },
 });
 
+type StatusTheme = { fg(color: string, text: string): string };
+
+function formatStatus(
+  theme: StatusTheme,
+  result: Awaited<ReturnType<typeof requestContext>>,
+): string {
+  if (result.error) return "";
+  if (!result.path) return theme.fg("dim", "○ no active editor");
+
+  const label = basename(result.path);
+  const dirty = result.isDirty
+    ? theme.fg("warning", "●")
+    : theme.fg("dim", "○");
+
+  if (result.selectedCode?.range) {
+    const { start, end } = result.selectedCode.range;
+    const lineText =
+      start.line === end.line
+        ? `${start.line + 1}`
+        : `${start.line + 1}-${end.line + 1}`;
+    return `${dirty} ${theme.fg("accent", label)}${theme.fg("dim", `:${lineText}`)}`;
+  }
+
+  if (result.cursor) {
+    return `${dirty} ${theme.fg("accent", label)}${theme.fg("dim", `:${result.cursor.line + 1}`)}`;
+  }
+
+  return `${dirty} ${theme.fg("accent", label)}`;
+}
+
 export default function (pi: ExtensionAPI) {
   pi.registerTool(vscodeContextTool);
   pi.registerTool(vscodeDiagnosticsTool);
   pi.registerTool(vscodeBrowserSelectionTool);
+
+  let pollTimer: ReturnType<typeof setInterval> | undefined;
+  let inFlight = false;
+
+  pi.on("session_start", async (_event, ctx) => {
+    const poll = async () => {
+      if (inFlight) return;
+      inFlight = true;
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(
+          () => controller.abort(),
+          STATUS_REQUEST_TIMEOUT_MS,
+        );
+        try {
+          const result = await requestContext({
+            cwd: ctx.cwd,
+            signal: controller.signal,
+            timeoutMs: STATUS_REQUEST_TIMEOUT_MS,
+          });
+          ctx.ui.setStatus(
+            STATUS_KEY,
+            formatStatus(ctx.ui.theme, result) || undefined,
+          );
+        } finally {
+          clearTimeout(timeout);
+        }
+      } catch {
+        // No VS Code server reachable (not open, no matching workspace, etc).
+        // Stay quiet rather than showing a noisy footer error.
+        ctx.ui.setStatus(STATUS_KEY, undefined);
+      } finally {
+        inFlight = false;
+      }
+    };
+
+    void poll();
+    pollTimer = setInterval(() => void poll(), STATUS_POLL_INTERVAL_MS);
+  });
+
+  pi.on("session_shutdown", async (_event, ctx) => {
+    if (pollTimer) clearInterval(pollTimer);
+    pollTimer = undefined;
+    ctx.ui.setStatus(STATUS_KEY, undefined);
+  });
 }
