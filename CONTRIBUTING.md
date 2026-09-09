@@ -15,7 +15,7 @@ npm run check
 To exercise the extension locally, open this repository in desktop VS Code and run **Run VS Code Context Extension** from **Run and Debug**. Install the Pi package from the workspace with:
 
 ```sh
-pi install ./packages/pi-extension
+pi install ./packages/pi-vscode-context
 ```
 
 ## Pull requests

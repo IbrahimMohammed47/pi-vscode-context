@@ -2,14 +2,24 @@
 
 All notable changes to this project will be documented here.
 
+## Unreleased
+
+### Added
+
+- Remote SSH support with the companion extension and Pi running on the same workspace host.
+- User-initiated Integrated Browser element picker and `vscode_browser_selection` tool, returning bounded DOM, selector, layout, and computed-style context.
+
+### Fixed
+
+- Resolve a live visible editor when active editor focus is lost, without caching selected text or retaining hidden/closed editors.
+
 ## [0.1.1] - 2026-07-19
 
 ## [0.1.1](https://github.com/IbrahimMohammed47/pi-vscode-context/compare/v0.1.0...v0.1.1) (2026-07-19)
 
-
 ### Bug Fixes
 
-* **package:** Improve discovery metadata and documentation ([691c716](https://github.com/IbrahimMohammed47/pi-vscode-context/commit/691c716a8a0ff438a5d03dc57640779ac555f84b))
+- **package:** Improve discovery metadata and documentation ([691c716](https://github.com/IbrahimMohammed47/pi-vscode-context/commit/691c716a8a0ff438a5d03dc57640779ac555f84b))
 
 ## [0.1.0] - 2026-07-19
 

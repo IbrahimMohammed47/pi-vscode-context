@@ -1,7 +1,7 @@
 {
   "name": "pi-vscode-context",
   "version": "0.1.1",
-  "description": "Read active VS Code editor context and diagnostics from Pi",
+  "description": "Read active VS Code editor context, Integrated Browser elements, and diagnostics from Pi",
   "keywords": [
     "pi-package",
     "pi",
@@ -20,7 +20,7 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/IbrahimMohammed47/pi-vscode-context.git",
-    "directory": "packages/pi-extension"
+    "directory": "packages/pi-vscode-context"
   },
   "engines": {
     "node": ">=22"

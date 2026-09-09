@@ -5,7 +5,7 @@
 Local, read-only `pi-vscode-context` integration in npm workspaces:
 
 - `packages/vscode-extension`: authenticated loopback server backed by VS Code APIs
-- `packages/pi-extension`: Pi tools `vscode_context` and `vscode_diagnostics`
+- `packages/pi-vscode-context`: Pi tools `vscode_context` and `vscode_diagnostics`
 
 ## Guidelines
 

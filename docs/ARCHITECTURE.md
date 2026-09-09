@@ -12,6 +12,7 @@ The integration answers questions that filesystem tools cannot answer reliably:
 - Where is the cursor?
 - What code is currently selected, including unsaved selection?
 - What diagnostics are currently reported by VS Code language extensions?
+- Which rendered element did the user explicitly pick in VS Code's Integrated Browser?
 
 Normal Pi tools remain responsible for reading files, searching, editing, Git, and tests.
 
@@ -19,9 +20,9 @@ Normal Pi tools remain responsible for reading files, searching, editing, Git, a
 
 ```text
 packages/vscode-extension
-  VS Code APIs, local HTTP server, discovery, context, diagnostics
+  VS Code APIs, local HTTP server, discovery, context, browser element capture, diagnostics
 
-packages/pi-extension
+packages/pi-vscode-context
   Pi tool definitions, discovery client, authenticated requests
 ```
 
@@ -40,7 +41,7 @@ VS Code window B ── authenticated HTTP server B ── discovery record B
                                      Pi
 ```
 
-Pi does not need to run in VS Code's integrated terminal. It may run in any local terminal under the same OS user.
+Pi does not need to run in VS Code's integrated terminal. It may run in any terminal under the same OS user on the workspace host. The extension uses `extensionKind: ["workspace"]`; in Remote SSH, both the server and Pi run remotely, with unchanged loopback transport and private discovery. No SSH port forwarding is needed.
 
 ## Communication technology
 
@@ -150,7 +151,7 @@ When selection exists:
 }
 ```
 
-`selectedCode` is current VS Code editor selection. It remains selected when focus moves from editor to terminal, though VS Code renders it as inactive selection. It becomes `null` when selection collapses. It is not selection history; no state is retained.
+`selectedCode` is current VS Code editor selection. It remains selected when focus moves from editor to terminal, though VS Code renders it as inactive selection. It becomes `null` when selection collapses. It is not selection history; no selected text is retained. If `activeTextEditor` becomes undefined, a live reference to the last active editor is used only while that editor remains visible. A sole visible editor is also an unambiguous fallback at activation. Hidden/closed editors and ambiguous splits do not supply fallback context. Active diagnostics use the same editor resolution.
 
 Selected text is bounded to 48KB and may be shortened further when JSON escaping would exceed the 64KB response bound. Truncated selection adds:
 
@@ -170,6 +171,41 @@ Removed intentionally:
 - Generic file content
 
 These overlapped normal Pi tools, increased token use, or exposed incidental UI state.
+
+### `vscode_browser_selection()`
+
+No arguments.
+
+Use only when the user asks about an element in VS Code's built-in Integrated Browser. The user runs **Pi: Pick Integrated Browser Element**, then hovers and clicks the intended element.
+
+Capture implementation:
+
+1. Briefly attach VS Code's built-in `editor-browser` debugger to the active browser tab.
+2. Inject a bounded, user-initiated element picker and immediately detach the debugger.
+3. Highlight the hovered element and intercept one click without activating the page control.
+4. Collect URL, selector, outerHTML, text, attributes, bounds, and key computed styles.
+5. Transfer the marked JSON payload through the clipboard, restore the previous clipboard, and retain the snapshot in extension memory.
+6. Return the stored snapshot when Pi calls the authenticated endpoint.
+
+Response:
+
+```json
+{
+  "selectedElement": {
+    "url": "http://localhost:3000/",
+    "tagName": "button",
+    "selector": "button#save",
+    "outerHTML": "<button id=\"save\">Save</button>",
+    "text": "Save",
+    "attributes": { "id": "save" },
+    "rect": { "x": 10, "y": 20, "width": 80, "height": 32 },
+    "computedStyle": { "display": "inline-block" }
+  },
+  "capturedAt": "2026-09-08T03:15:00.000Z"
+}
+```
+
+Payload fields are bounded before clipboard transfer and the server enforces its 64KB response limit. The in-memory snapshot is replaced on each capture and disappears when the VS Code extension host stops. Before the first capture, the endpoint returns `NO_BROWSER_ELEMENT_CAPTURE`. The picker targets the built-in Integrated Browser; legacy Simple Browser and arbitrary third-party webviews remain unsupported.
 
 ### `vscode_diagnostics({ scope })`
 
@@ -202,7 +238,7 @@ An empty list means VS Code currently reports no matching diagnostics. Diagnosti
 ## Agent routing
 
 | User intent | Correct behavior |
-|---|---|
+| --- | --- |
 | "Explain selected code" | `vscode_context()`, use `selectedCode` |
 | "What file am I looking at?" | `vscode_context()`, use metadata |
 | "Explain code at cursor" | `vscode_context()`, then targeted normal `read` |
@@ -211,6 +247,7 @@ An empty list means VS Code currently reports no matching diagnostics. Diagnosti
 | "Edit this file" | Normal `edit`/`write` |
 | "What error is VS Code showing?" | `vscode_diagnostics({scope:"active"})` |
 | "Any VS Code errors in project?" | `vscode_diagnostics({scope:"workspace"})` |
+| "What is selected in the VS Code browser?" | Run **Pi: Pick Integrated Browser Element**, click it, then `vscode_browser_selection()` |
 
 ## Errors
 
@@ -231,7 +268,7 @@ Expected recovery:
 
 ## Data handling
 
-VS Code reads editor and diagnostic state only when authenticated request arrives. No automatic context injection, continuous copying, editor mutation, content logging, or separate content persistence occurs.
+VS Code reads editor and diagnostic state only when an authenticated request arrives. A browser element is captured only through the explicit picker command, stored in extension memory, and returned on an authenticated request. Capture briefly attaches the built-in browser debugger, injects a one-shot picker, transfers a bounded payload through the clipboard, and restores the prior clipboard. No automatic context injection, continuous copying, content logging, or separate persistence occurs.
 
 Tool results follow normal Pi session persistence behavior because model must receive them.
 
@@ -240,13 +277,13 @@ Tool results follow normal Pi session persistence behavior because model must re
 Supported:
 
 - Local desktop VS Code
-- Local Pi process under same OS user
+- Pi process under the same OS user on the workspace host
+- Remote SSH with the companion extension installed on the SSH host
 - Pi in integrated or external terminal
 - Multiple VS Code windows and multi-root workspaces
 
 Deferred:
 
-- Remote SSH
 - WSL
 - Dev Containers
 - Codespaces
